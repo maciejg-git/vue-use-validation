@@ -1,6 +1,6 @@
 # vue-use-validation
 
-Validation composable for Vue 3.
+Light validation composable for Vue 3.
 
 ```javascript
 {
@@ -41,13 +41,13 @@ Validation composable for Vue 3.
 - **validationStatus** - object with the details of validation results. It is updated once initially and then after each inputs value change.
 - **validationState** - final calculated validation state of input.
 - **validationMessages** - object with the validation messages.
-- **touch** - function that should be called as handler for input blur event.
+- **touch** - function that should be set as handler for input blur event.
 - **formValidate** - function to manually validate and update validation state of the input.
 - **resetValidation** - function to reset validation.
 
 ### How to use those
 
-Simple example
+#### Simple example
 
 ```vue
 <template>
@@ -87,7 +87,7 @@ let {
 </script>
 ```
 
-Validate options example
+#### Validate options example
 
 ```vue
 <template>
@@ -134,7 +134,7 @@ let {
 </script>
 ```
 
-Form validation example
+#### Form validation example
 
 ```vue
 <template>
