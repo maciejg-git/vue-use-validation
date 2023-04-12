@@ -1,5 +1,5 @@
 import { ref, watch, unref } from "vue";
-import { globalValidators } from "../../validators";
+import { globalValidators } from "./validators";
 
 let isFunction = (v) => typeof v === "function";
 
