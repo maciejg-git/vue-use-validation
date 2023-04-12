@@ -109,7 +109,16 @@ type GlobalOptions = {
 #### Required properties:
 
 - **value** - value to validate (v-model of input)
-- **rules** - an array of validation rules where each item is a name of global validator (`string` or `object`) or function with tested value as argument. Functions should return true for valid values or the string message if the result is invalid.
+- **rules** - an array of validation rules where each item is: 
+    - name of validator (`string` or `object` if validator has parameter). For list of available validators check [https://github.com/maciejg-git/vue-use-validation/blob/main/validators.js](validators.js).
+    - object with single function and tested value as argument. Function should return true for valid values or the string message if the result is invalid.
+```javascript
+rules: [
+  "required",
+  { minLength: 5 },
+  { alphanumeric: (v) => v.test(/^[a-zA-Z0-9]+$/) || "Please enter only letters or numbers." }
+],
+```
 
 #### Optional properties:
 
@@ -129,7 +138,6 @@ type GlobalOptions = {
 
 - **onUpdateState** - optional callback to run on each update of validation state. This function has 3 arguments: status, state and messages.
 - **onReset** - optional callback to run on form reset. This can be used to perform additional actions on reset, for example set input value to its default, as internally useValidation resets only validation related data.
-For single input one validation object for that input is returned:
 
 ### Returns:
 
