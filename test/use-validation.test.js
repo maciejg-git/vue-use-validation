@@ -1,5 +1,6 @@
 import { ref, nextTick } from "vue";
-import useValidation from "../use-validation";
+import useValidation from "./use-validation";
+import useFormValidation from "./use-form-validation";
 
 let defaultRules = ["required"];
 
@@ -81,31 +82,46 @@ describe("updates", () => {
   });
 });
 
-test("sets status dirty on dirty inputs", async () => {
-  let value = ref("");
+describe("should set dirty, touched and optional status", () => {
+  test("dirty on dirty inputs", async () => {
+    let value = ref("");
 
-  let { status, state, messages } = useValidation({
-    value,
-    rules: defaultRules,
+    let { status, state, messages } = useValidation({
+      value,
+      rules: defaultRules,
+    });
+
+    value.value = "a";
+
+    await nextTick();
+    expect(status.value.dirty).toBe(true);
   });
 
-  value.value = "a";
+  test("touched on touched inputs", () => {
+    let value = ref("");
 
-  await nextTick();
-  expect(status.value.dirty).toBe(true);
-});
+    let { status, state, messages, touch } = useValidation({
+      value,
+      rules: defaultRules,
+    });
 
-test("sets status touched on touched inputs", () => {
-  let value = ref("");
+    touch();
 
-  let { status, state, messages, touch } = useValidation({
-    value,
-    rules: defaultRules,
+    expect(status.value.touched).toBe(true);
   });
 
-  touch();
+  test("optional on non required and empty imputs", () => {
+    let value = ref("");
 
-  expect(status.value.touched).toBe(true);
+    let { status, state, messages, touch } = useValidation({
+      value,
+      rules: [{ minLength: 3 }],
+    });
+
+    touch();
+
+    expect(status.value.optional).toBe(true);
+  });
 });
 
 test("updates messages", () => {
@@ -140,28 +156,122 @@ test("sets external state", async () => {
   expect(state.value).toBe("invalid");
 });
 
-test("validate on blur (validateOn === 'blur')", async () => {
-  let value = ref("");
+describe("validateOn option", () => {
+  test("on blur", async () => {
+    let value = ref("");
 
-  let { status, state, messages, touch } = useValidation({
-    value,
-    rules: defaultRules,
-    options: {
-      validateOn: "blur",
-    },
+    let { status, state, messages, touch } = useValidation({
+      value,
+      rules: defaultRules,
+      options: {
+        validateOn: "blur",
+      },
+    });
+
+    value.value = "a";
+    await nextTick();
+    expect(state.value).toBe("");
+
+    value.value = "";
+    await nextTick();
+    expect(state.value).toBe("");
+
+    touch();
+    await nextTick();
+    expect(state.value).toBe("invalid");
   });
 
-  value.value = "a";
-  await nextTick();
-  expect(state.value).toBe("");
+  test("immediate", async () => {
+    let value = ref("");
 
-  value.value = "";
-  await nextTick();
-  expect(state.value).toBe("");
+    let { status, state, messages, touch } = useValidation({
+      value,
+      rules: [...defaultRules, { minLength: 3 }],
+      options: {
+        validateOn: "immediate",
+      },
+    });
 
-  touch();
-  await nextTick();
-  expect(state.value).toBe("invalid");
+    value.value = "a";
+    await nextTick();
+    expect(state.value).toBe("invalid");
+
+    value.value = "aaa";
+    await nextTick();
+    expect(state.value).toBe("valid");
+  });
+
+  test("form", () => {
+    let value = ref("");
+
+    let form = useFormValidation();
+
+    let { status, state, messages, touch } = useValidation({
+      form,
+      value,
+      rules: defaultRules,
+    });
+
+    expect(state.value).toBe("");
+
+    form.validate();
+
+    expect(state.value).toBe("invalid");
+  });
+});
+
+describe("validateMode", () => {
+  test("eager - validate on blur", async () => {
+    let value = ref("");
+
+    let { status, state, messages, touch } = useValidation({
+      value,
+      rules: defaultRules,
+      options: {
+        validateMode: "eager",
+      },
+    });
+
+    value.value = "a";
+    await nextTick();
+    touch();
+    expect(state.value).toBe("valid");
+  });
+
+  test("eager - validate immediate", async () => {
+    let value = ref("");
+
+    let { status, state, messages, touch } = useValidation({
+      value,
+      rules: defaultRules,
+      options: {
+        validateOn: "immediate",
+        validateMode: "eager",
+      },
+    });
+
+    value.value = "a";
+    await nextTick();
+    expect(state.value).toBe("valid");
+  });
+
+  test("silent - validate on blur", async () => {
+    let value = ref("");
+
+    let { status, state, messages, touch } = useValidation({
+      value,
+      rules: defaultRules,
+      options: {
+        validateOn: "blur",
+        validateMode: "silent",
+      },
+    });
+
+    value.value = "a";
+    await nextTick();
+    touch();
+    expect(state.value).toBe("");
+  });
 });
 
 test("adds each validator property to messages", async () => {
@@ -224,9 +334,9 @@ describe("onUpdate callback", () => {
       onUpdate,
     });
 
-    value.value = "a"
+    value.value = "a";
 
-    await nextTick()
+    await nextTick();
 
     expect(onUpdate).toHaveBeenCalledTimes(2);
   });
@@ -280,6 +390,22 @@ describe("onUpdate callback", () => {
   });
 });
 
+test("reset callback is called on reset", () => {
+  let value = ref("");
+
+  let onReset = vi.fn();
+
+  let { status, state, messages, reset } = useValidation({
+    value,
+    rules: defaultRules,
+    onReset,
+  });
+
+  reset();
+
+  expect(onReset).toHaveBeenCalled();
+});
+
 test("returns correct object for array of inputs", () => {
   let value = ref("");
   let password = ref("");
@@ -301,4 +427,99 @@ test("returns correct object for array of inputs", () => {
   expect(inputs).toHaveProperty("password");
   expect(inputs.username).toHaveProperty("status");
   expect(inputs.password).toHaveProperty("status");
+});
+
+test("correctly validates function rules", async () => {
+  let value = ref("");
+
+  let { status, state, messages, touch } = useValidation({
+    value,
+    rules: [{ validator: (v) => v === "a" || "error" }],
+  });
+
+  expect(state.value).toBe("");
+
+  value.value = "aa";
+  await nextTick();
+  touch();
+  expect(state.value).toBe("invalid");
+  expect(messages.value.validator).toBe("error");
+
+  value.value = "a";
+  await nextTick();
+  expect(state.value).toBe("valid");
+  expect(messages.value.validator).toBe(undefined);
+});
+
+test("adds inputs to form (useFormValidation)", () => {
+  let value = ref("");
+  let password = ref("");
+
+  let form = useFormValidation();
+
+  let inputs = useValidation([
+    {
+      form,
+      value,
+      rules: defaultRules,
+      name: "username",
+    },
+    {
+      form,
+      value: password,
+      rules: defaultRules,
+      name: "password",
+    },
+  ]);
+
+  expect(form.inputs[0].name).toBe("username");
+  expect(form.inputs[1].name).toBe("password");
+  expect(form.inputs[0]).toHaveProperty("status");
+  expect(form.inputs[1]).toHaveProperty("status");
+});
+
+test("correctly validates form (useFormValidation)", () => {
+  let value = ref("");
+  let password = ref("");
+
+  let form = useFormValidation();
+
+  let inputs = useValidation([
+    {
+      form,
+      value,
+      rules: defaultRules,
+      name: "username",
+    },
+    {
+      form,
+      value: password,
+      rules: defaultRules,
+      name: "password",
+    },
+  ]);
+
+  form.validate();
+
+  expect(inputs.username.state.value).toBe("invalid");
+  expect(inputs.password.state.value).toBe("invalid");
+});
+
+test("correctly reset validation to inital state (reset function)", async () => {
+  let value = ref("");
+
+  let { status, state, messages, reset, touch } = useValidation({
+    value,
+    rules: defaultRules,
+  });
+
+  value.value = "a";
+  await nextTick();
+  touch();
+
+  reset();
+
+  expect(status.value).toEqual(defaultStatus);
+  expect(state.value).toBe("");
+  expect(messages.value).toEqual({});
 });
