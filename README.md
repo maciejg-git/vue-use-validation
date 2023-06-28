@@ -75,7 +75,7 @@ let inputs = useValidation([
 
 # Usage:
 
-`useValidation` function takes as argument object (or array of objects) describing your input (or inputs). It contains required value (for example inputs model), rules property and number of optional properties to customize validation for specific input. Function returs and constantly updates object that contains validation results (status, state,  messages) and number of functions (touch, formValidate, reset).
+`useValidation` function takes as argument object (or array of objects) describing your input (or inputs). It contains required `value` to validate (for example inputs model), `rules` property and number of optional properties to customize validation for specific input. Function returns and constantly updates object that contains validation results (`status`, `state`,  `messages`) and number of functions (`touch`, `formValidate`, `reset`) to perform validation related actions on input.
 
 ```typescript
 let inputs = useValidation(inputs: Input | Input[], options?: GlobalOptions): Validation
@@ -115,7 +115,10 @@ type GlobalOptions = {
 
 #### Optional properties:
 
-- **form** - form object. Same form object can be used in multiple inputs to allow manual validation and resetting of entire group.
+- **form** - form object. Same form object can be used in multiple inputs to allow manual validation and resetting of entire group. Create form object with useFormValidation function:
+```javascript
+let form = useFormValidation()
+```
 - **name** - name of input. Name is required when adding multiple inputs.
 - **externalState** - external validation state to override calculated state
 - **options** - object with following options:
@@ -131,7 +134,6 @@ type GlobalOptions = {
 
 - **onUpdateState** - optional callback to run on each update of validation state. This function has 3 arguments: status, state and messages.
 - **onReset** - optional callback to run on form reset. This can be used to perform additional actions on reset, for example set input value to its default, as internally useValidation resets only validation related data.
-For single input one validation object for that input is returned:
 
 ### Returns:
 
