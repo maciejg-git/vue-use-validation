@@ -75,6 +75,8 @@ let inputs = useValidation([
 
 # Usage:
 
+`useValidation` function takes as argument object (or array of objects) describing your input (or inputs). It contains required value (for example inputs model), rules property and number of optional properties to customize validation for specific input. Function returs and constantly updates object that contains validation results (status, state,  messages) and number of functions (touch, formValidate, reset).
+
 ```typescript
 let inputs = useValidation(inputs: Input | Input[], options?: GlobalOptions): Validation
 ```
